@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload File PL</title>
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container mt-4" style="max-width: 600px;">
+        <div class="card shadow-lg">
+            <div class="card-body p-5">
+                <h1 class="text-center mb-4 text-primary">
+                    <i class="bi bi-file-earmark-arrow-up-fill me-2"></i>
+                    Upload Picking List
+                </h1>
+
+                <div id="alert-container" class="mb-3" aria-live="polite"></div>
+
+                <form method="POST" enctype="multipart/form-data" id="upload-form" action="/">
+                    
+                    <div class="mb-3">
+                        <div class="drop-zone" id="drop-zone" role="button">
+                            <div class="drop-zone-content">
+                                <i class="bi bi-cloud-arrow-up-fill"></i>
+                                <div class="drop-zone-text fs-6 mt-3">Seret file atau klik di sini</div>
+                                <div class="text-muted mt-2 small">Format: .xls, .xlsx, .pdf (Max: 10MB)</div>
+                            </div>
+                            <input type="file" name="file" class="form-control d-none" accept=".pdf, .xlsx, .xls" id="file-input">
+                        </div>
+                        <div id="file-preview" class="d-none mt-3">
+                            <i id="file-icon" class="bi fs-4 me-2"></i>
+                            <span id="file-name"></span>
+                        </div>
+                    </div>
+
+                    <div class="divider my-4">
+                        <span>ATAU VIA LINK</span>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0">
+                                <i class="bi bi-link-45deg text-muted"></i>
+                            </span>
+                            <input type="url" name="pdf_url" id="url-input" class="form-control border-start-0 ps-0" placeholder="Paste Link PDF Desty di sini..." autocomplete="off">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-3 fw-bold" id="submit-button">
+                        <span class="btn-text">
+                            <i class="bi bi-eye-fill me-2"></i>Lihat Preview
+                        </span>
+                        <div class="spinner"></div>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="text-center mt-4 pt-3 powered-by">
+            Powered by 
+            <a href="https://www.instagram.com/llvvxx_/" target="_blank" class="text-primary text-decoration-none fw-bold">
+                Davit Maulana
+            </a> 
+            | &copy; 2026
+            <br/>
+            Versi 2.4
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const fileInput = document.getElementById("file-input");
+            const urlInput = document.getElementById("url-input");
+            const dropZone = document.getElementById("drop-zone");
+            const uploadForm = document.getElementById("upload-form");
+            const submitButton = document.getElementById("submit-button");
+            const alertContainer = document.getElementById("alert-container");
+
+            function showAlert(message, category = 'danger') {
+                alertContainer.innerHTML = `<div class="alert alert-${category} alert-dismissible fade show">${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+            }
+
+            // Drag & Drop
+            dropZone.addEventListener("click", () => fileInput.click());
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length) {
+                    fileInput.files = e.dataTransfer.files;
+                    fileInput.dispatchEvent(new Event('change'));
+                }
+            });
+
+            // Handle File Input Change
+            fileInput.addEventListener("change", () => {
+                const preview = document.getElementById('file-preview');
+                const icon = document.getElementById('file-icon');
+                const nameDisplay = document.getElementById('file-name');
+                
+                urlInput.value = ""; 
+                
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    nameDisplay.textContent = file.name;
+                    preview.classList.remove('d-none');
+                    icon.className = file.name.endsWith('.pdf') ? 'bi bi-file-earmark-pdf-fill text-danger fs-4 me-2' : 'bi bi-file-earmark-excel-fill text-success fs-4 me-2';
+                }
+            });
+
+            urlInput.addEventListener("input", () => {
+                if(urlInput.value.length > 0) {
+                    fileInput.value = ""; // Clear file input
+                    document.getElementById('file-preview').classList.add('d-none');
+                }
+            });
+
+            // Submit Handling
+            uploadForm.addEventListener("submit", function(e) {
+                if (fileInput.files.length === 0 && urlInput.value.trim() === "") {
+                    e.preventDefault();
+                    showAlert("⚠️ Harap upload file ATAU masukkan link PDF!", "warning");
+                    return;
+                }
+
+                submitButton.classList.add("processing");
+                submitButton.disabled = true;
+            });
+            
+            window.addEventListener('pageshow', function(event) {
+                if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+                    submitButton.classList.remove("processing");
+                    submitButton.disabled = false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
